@@ -1,50 +1,91 @@
-# React + TypeScript + Vite
+# Deploy Vite React App lên GitHub Pages
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Hướng dẫn chi tiết từng bước triển khai ứng dụng Vite + React lên GitHub Pages bằng cách sử dụng GitHub Actions với actions-gh-pages.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Điều kiện tiên quyết
 
-## Expanding the ESLint configuration
+1. Một repository trên GitHub chứa dự án Vite + React của bạn.
+2. Hiểu biết cơ bản về `npm` và Git.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+---
 
-- Configure the top-level `parserOptions` property like this:
+## Hướng dẫn từng bước
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### 1. Cập nhật `vite.config.js`
+
+Thêm thuộc tính `base` vào file cấu hình Vite (`vite.config.js`). Thay `YOUR_REPOSITORY_NAME` bằng tên repository GitHub của bạn:
+
+```javascript
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  base: '/YOUR_REPOSITORY_NAME/',
+  plugins: [react()],
+});
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### 2. Cấu hình GitHub Actions
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+Tạo một file workflow GitHub Actions để tự động hóa quá trình triển khai. Lưu file sau dưới tên `.github/workflows/deploy.yml` trong repository của bạn:
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```yaml
+name: Deploy Vite React App to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the app
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dist
+          publish_branch: gh-pages
 ```
+
+### 3. Push các thay đổi lên GitHub
+
+Commit các thay đổi cho `vite.config.js`, và `.github/workflows/deploy.yml`. Sau đó, push lên nhánh `main`:
+
+```bash
+git add .
+git commit -m "Cấu hình triển khai lên GitHub Pages"
+git push origin main
+```
+
+### 4. Bật GitHub Pages
+
+1. Truy cập vào repository trên GitHub.
+2. Vào **Settings > Pages**.
+3. Trong mục **Source**, chọn nhánh `gh-pages`.
+4. Nhấn **Save**.
+
+---
+
+## Ghi chú
+
+- Workflow sẽ tự động chạy mỗi khi bạn push thay đổi lên nhánh `main`.
+- Ứng dụng sẽ được triển khai tại URL: `https://USERNAME.github.io/REPOSITORY_NAME/`.
